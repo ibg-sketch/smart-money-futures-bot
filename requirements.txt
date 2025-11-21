@@ -1,5 +1,5 @@
-requests==2.32.3
-python-dotenv==1.0.1
-PyYAML==6.0.2
-pandas==2.2.2
-numpy==1.26.4
+requests
+python-dotenv
+PyYAML
+pandas
+numpy
