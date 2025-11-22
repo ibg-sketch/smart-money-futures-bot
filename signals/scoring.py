@@ -1,5 +1,15 @@
+"""Signal scoring logic split from the legacy ``smart_signal`` module.
+
+This module stays focused on the decision engine and imports indicator
+calculations from :mod:`signals.features`, calibration helpers from
+:mod:`signals.calibration`, and (for type awareness) formatting helpers from
+:mod:`signals.formatting`. The runtime API is unchanged: ``decide_signal``
+and ``calculate_price_targets`` remain the public entrypoints consumed by
+``main.py`` and the notifier layers.
+"""
+
 import uuid
-from typing import Dict, Tuple
+from typing import Dict, Tuple, TYPE_CHECKING
 
 import numpy as np
 from order_flow_indicators import calculate_bid_ask_aggression, detect_psychological_levels
@@ -24,6 +34,9 @@ from .features import (
     fetch_uif_snapshot,
     summarize_liquidations,
 )
+
+if TYPE_CHECKING:  # for static checkers without creating a circular import
+    from .formatting import format_signal_telegram
 
 
 # Exported API
