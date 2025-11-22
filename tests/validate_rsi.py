@@ -6,7 +6,7 @@ Fetches live data from Binance and compares our RSI calculation with reference i
 
 import requests
 import numpy as np
-from smart_signal import compute_rsi
+from signals.features import compute_rsi
 import json
 from datetime import datetime
 
