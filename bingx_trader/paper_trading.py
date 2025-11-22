@@ -6,6 +6,8 @@ import requests
 import time
 from typing import Dict, Optional
 
+BINANCE_TICKER_URL = "https://fapi.binance.com/fapi/v1/ticker/price"
+
 _last_prices = {}
 
 def get_simulated_price(symbol: str, max_retries: int = 3) -> float:
@@ -52,7 +54,15 @@ def get_simulated_price(symbol: str, max_retries: int = 3) -> float:
                     print(f"⚠️  Using cached price for {symbol}: ${_last_prices[symbol]:.4f}")
                     return _last_prices[symbol]
                 else:
-                    print(f"❌ Error getting price for {symbol}: {e}")
-                    raise
+                    print(f"⚠️  BingX price failed for {symbol}: {e}, falling back to Binance")
+                    try:
+                        response = requests.get(BINANCE_TICKER_URL, params={'symbol': symbol}, timeout=5)
+                        response.raise_for_status()
+                        price = float(response.json().get('price'))
+                        _last_prices[symbol] = price
+                        return price
+                    except Exception as fallback_err:
+                        print(f"❌ Error getting price for {symbol}: {fallback_err}")
+                        raise
     
     raise Exception(f"Failed to get price for {symbol} after {max_retries} attempts")
