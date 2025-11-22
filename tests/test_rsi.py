@@ -6,7 +6,7 @@ Tests with known reference values to ensure correctness
 
 import unittest
 import numpy as np
-from smart_signal import compute_rsi
+from signals.features import compute_rsi
 
 
 class TestRSICalculation(unittest.TestCase):
