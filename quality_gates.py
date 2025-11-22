@@ -16,7 +16,7 @@ import json
 import os
 import sys
 import csv
-import datetime
+from datetime import datetime, time, timedelta, timezone
 from pathlib import Path
 from collections import defaultdict
 from telegram_utils import send_telegram_message
@@ -48,7 +48,7 @@ def backup_config(config):
         Path('configs').mkdir(exist_ok=True)
         
         # Create backup filename with date
-        date_str = datetime.datetime.utcnow().strftime('%Y%m%d')
+        date_str = datetime.now(timezone.utc).strftime('%Y%m%d')
         backup_path = f'configs/config_{date_str}.yaml'
         
         # Write backup
@@ -69,9 +69,9 @@ def compute_regime_metrics(analysis_log_path='analysis_log.csv', effectiveness_l
         dict: {symbol: {regime: {profit_factor, win_rate, blocked_share, signals_total, ...}}}
     """
     # Get today's date range (00:00 to 23:59 UTC)
-    today = datetime.datetime.utcnow().date()
-    today_start = datetime.datetime.combine(today, datetime.time.min)
-    today_end = datetime.datetime.combine(today, datetime.time.max)
+    today = datetime.now(timezone.utc).date()
+    today_start = datetime.combine(today, time.min, tzinfo=timezone.utc)
+    today_end = datetime.combine(today, time.max, tzinfo=timezone.utc)
     
     # Data structures for regime-specific metrics
     regime_data = defaultdict(lambda: defaultdict(lambda: {
@@ -196,7 +196,7 @@ def compute_shadow_effect(symbol, new_min_score, analysis_log_path='analysis_log
         dict: {shadow_filtered: int, shadow_pf: float}
     """
     # Get yesterday's date range
-    yesterday = (datetime.datetime.utcnow() - datetime.timedelta(days=1)).date()
+    yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).date()
     yesterday_start = datetime.datetime.combine(yesterday, datetime.time.min)
     yesterday_end = datetime.datetime.combine(yesterday, datetime.time.max)
     
@@ -328,7 +328,7 @@ def apply_quality_gates(regime_metrics, dry_run=False):
     
     # Load history
     history = load_history()
-    today = datetime.datetime.utcnow().date().isoformat()
+    today = datetime.now(timezone.utc).date().isoformat()
     
     # Track SELL disables today (canary limit)
     disabled_today_count = 0
