@@ -5,7 +5,8 @@ Output sinks: CSV logging and Telegram messaging
 import csv
 import os
 import logging
-from datetime import datetime
+import os
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 import sys
 
@@ -68,7 +69,7 @@ class OutputSink:
         """
         try:
             row = {
-                'ts': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+                'ts': datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S'),
                 'symbol': symbol,
                 'signal_id': signal_id,
                 'verdict': verdict,
@@ -170,7 +171,7 @@ class OutputSink:
             
             with open(filename, 'w', encoding='utf-8') as f:
                 f.write(f"# AI Daily Summary - {date_str}\n\n")
-                f.write(f"Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC\n\n")
+                f.write(f"Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')} UTC\n\n")
                 f.write("---\n\n")
                 f.write(content)
             
