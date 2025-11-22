@@ -2607,16 +2607,31 @@ def format_signal_telegram(s: dict)->str:
     
     # CVD with direction
     cvd = s.get('cvd', 0)
+
+    # Есть ли вообще осмысленные данные по CVD?
+    # 0 или почти 0 трактуем как "по сути нет сигнала по потоку ордеров"
+    has_cvd_data = isinstance(cvd, (int, float)) and abs(cvd) >= 1
+
     cvd_direction = "🟢" if cvd > 0 else "🔴" if cvd < 0 else "⚪️"
-    
-    if cvd_active and oi_active:
-        cvd_oi_line = f"<b>{cvd_direction} CVD: {_human_int(cvd)} | {oi_direction} OI: {_human_int(oi_change)}</b>"
-    elif cvd_active:
-        cvd_oi_line = f"<b>{cvd_direction} CVD: {_human_int(cvd)}</b> | {oi_direction} OI: {_human_int(oi_change)}"
-    elif oi_active:
-        cvd_oi_line = f"{cvd_direction} CVD: {_human_int(cvd)} | <b>{oi_direction} OI: {_human_int(oi_change)}</b>"
+
+    if not has_cvd_data:
+        # Нет нормального CVD → показываем N/A, чтобы не путать с "реальным нулём"
+        cvd_text = "CVD: N/A"
+        if oi_active:
+            # OI важен → подсветим его, а CVD оставим как есть
+            cvd_oi_line = f"{cvd_text} | <b>{oi_direction} OI: {_human_int(oi_change)}</b>"
+        else:
+            cvd_oi_line = f"{cvd_text} | {oi_direction} OI: {_human_int(oi_change)}"
     else:
-        cvd_oi_line = f"{cvd_direction} CVD: {_human_int(cvd)} | {oi_direction} OI: {_human_int(oi_change)}"
+        if cvd_active and oi_active:
+            cvd_oi_line = f"<b>{cvd_direction} CVD: {_human_int(cvd)} | {oi_direction} OI: {_human_int(oi_change)}</b>"
+        elif cvd_active:
+            cvd_oi_line = f"<b>{cvd_direction} CVD: {_human_int(cvd)}</b> | {oi_direction} OI: {_human_int(oi_change)}"
+        elif oi_active:
+            cvd_oi_line = f"{cvd_direction} CVD: {_human_int(cvd)} | <b>{oi_direction} OI: {_human_int(oi_change)}</b>"
+        else:
+            cvd_oi_line = f"{cvd_direction} CVD: {_human_int(cvd)} | {oi_direction} OI: {_human_int(oi_change)}"
+
     
     # === BLOCK 3: TECHNICAL INDICATORS (compact) ===
     # EMA trend
