@@ -20,10 +20,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Импортируем функции расчета из основного бота
-from smart_signal import (
-    calculate_atr, 
-    calculate_price_targets
-)
+from signals.features import calculate_atr
+from signals.scoring import calculate_price_targets
 
 # Coinalyze API
 COINALYZE_API_KEY = os.getenv('COINALYZE_API_KEY')
