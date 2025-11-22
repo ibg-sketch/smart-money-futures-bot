@@ -11,7 +11,7 @@ import time
 import yaml
 import pandas as pd
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 
 # Add parent directory to path for imports
@@ -164,7 +164,7 @@ def run_collection_cycle(symbols: list, writer: UIFWriter) -> bool:
     Returns:
         True if cycle completed successfully
     """
-    print(f"\n[{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}] Starting UIF collection cycle")
+    print(f"\n[{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}] Starting UIF collection cycle")
     
     snapshot_data = {}
     success_count = 0
