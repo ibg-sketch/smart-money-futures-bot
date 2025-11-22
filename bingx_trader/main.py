@@ -334,9 +334,9 @@ class TradingService:
                     today_profit += float(row['actual_profit_usd'])
         
         return today_profit
-    
+
     def _send_hourly_report(self):
-      """Send hourly effectiveness report to trading channel (if data exists)."""
+        """Send hourly effectiveness report to trading channel (if data exists)."""
         now = datetime.now()
 
         # Only send once per hour and only at minute 0 to avoid spamming
