@@ -1,7 +1,10 @@
-import time, yaml, datetime, os, csv, json, fcntl, sys, atexit, uuid
+import time, yaml, os, csv, json, fcntl, sys, atexit, uuid
 from collections import defaultdict, deque
+from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
-from smart_signal import decide_signal, format_signal_telegram, calculate_price_targets
+from signals import decide_signal
+from signals.formatting import format_signal_telegram
+from signals.scoring import calculate_price_targets
 from telegram_utils import send_telegram_message
 from signal_tracker import ActiveSignalsManager, log_cancelled_signal, format_effectiveness_report
 from services.ai_analyst.runner import AIAnalystService
@@ -165,7 +168,7 @@ def register_signal_for_tracking(res, cfg, telegram_msg_id=None):
         duration_minutes = ttl_minutes
         
         signal_data = {
-            'timestamp': datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+            'timestamp': datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S'),
             'symbol': res['symbol'],
             'verdict': res['verdict'],
             'confidence': res['confidence'],
@@ -197,7 +200,7 @@ def register_signal_for_tracking(res, cfg, telegram_msg_id=None):
 
 def append_analysis_log(res: dict):
     try:
-        ts=datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'); liq=res.get('liq_summary',{}); vol=res.get('volume',{})
+        ts=datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S'); liq=res.get('liq_summary',{}); vol=res.get('volume',{})
         price=res.get('last_close',0); vwap=res.get('vwap_ref',0); oi=res.get('oi_now',0); oip=res.get('oi_prev',0)
         price_vs_vwap=res.get('price_vs_vwap_pct', round(((price/vwap)-1)*100,2) if vwap>0 else 0)
         oi_chg=res.get('oi_change',0); oi_chg_pct=round((oi_chg/oip)*100,2) if oip and oip>0 else 0
@@ -265,7 +268,7 @@ def append_signal_log(res: dict):
         if 'signal_id' not in res:
             res['signal_id'] = uuid.uuid4().hex
         
-        ts=datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'); liq=res.get('liq_summary',{}); comp=res.get('components',{})
+        ts=datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S'); liq=res.get('liq_summary',{}); comp=res.get('components',{})
         comp_str='|'.join([k for k,v in comp.items() if v])
         ttl_minutes=res.get('ttl_minutes',0)
         
@@ -551,7 +554,7 @@ def run_once(cfg, tracking, gate_results=None):
             # Send new signal if valid (and not just cancelled)
             if res['verdict']!='NO_TRADE' and not cancelled:
                 # CRITICAL: Validate fresh data before broadcasting to prevent sending signals when market has reversed
-                from smart_signal import validate_signal_momentum_fresh
+                from signals.features import validate_signal_momentum_fresh
                 is_still_valid = validate_signal_momentum_fresh(
                     symbol=sym,
                     verdict=res['verdict'],
@@ -575,7 +578,7 @@ def run_once(cfg, tracking, gate_results=None):
                     tracking.append({
                         'symbol': sym,
                         'message_id': message_id,
-                        'timestamp': datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+                        'timestamp': datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S'),
                         'verdict': res['verdict'],
                         'confidence': res.get('confidence', 0),
                         'entry_price': res.get('last_close', 0),
@@ -669,7 +672,7 @@ def main():
     print(f'[INFO] Brier scores: {"ENABLED" if brier_enabled else "DISABLED (MVP freeze)"}')
     
     # Track last daily report date (initialize to yesterday to enable first run)
-    last_daily_report_date = (datetime.datetime.utcnow() - datetime.timedelta(days=1)).date()
+    last_daily_report_date = (datetime.now(timezone.utc) - timedelta(days=1)).date()
     
     while True:
         run_once(cfg, tracking)
@@ -677,7 +680,7 @@ def main():
         # NOTE: Hourly effectiveness report is now handled by signal_tracker.py to avoid duplicates
         
         # Check if it's time to send daily basic report (MVP - no quality gates/brier)
-        current_utc = datetime.datetime.utcnow()
+        current_utc = datetime.now(timezone.utc)
         current_date = current_utc.date()
         current_hour = current_utc.hour
         current_minute = current_utc.minute
