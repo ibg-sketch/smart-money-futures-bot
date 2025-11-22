@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from signals import decide_signal
 from signals.formatting import format_signal_telegram
 from signals.scoring import calculate_price_targets
+from signals.features import DataFeedUnavailable
 from telegram_utils import send_telegram_message
 from signal_tracker import ActiveSignalsManager, log_cancelled_signal, format_effectiveness_report
 from services.ai_analyst.runner import AIAnalystService
@@ -18,6 +19,29 @@ PID_FILE='signal_bot.pid'
 
 # Global AI Analyst instance (initialized in main)
 ai_analyst = None
+
+# Throttle noisy alerts when market data is unavailable
+_LAST_FEED_ALERT_TS = 0
+_FEED_ALERT_COOLDOWN = 30 * 60  # seconds
+
+
+def alert_data_feed_unavailable(error_message: str) -> None:
+    """Send a single Telegram alert when upstream market data is unreachable."""
+    global _LAST_FEED_ALERT_TS
+    now = time.time()
+    if now - _LAST_FEED_ALERT_TS < _FEED_ALERT_COOLDOWN:
+        return
+
+    _LAST_FEED_ALERT_TS = now
+    try:
+        send_telegram_message(
+            "⚠️ <b>Data feed unavailable</b>\n"
+            "Signals are paused because market data could not be reached.\n"
+            f"Last error: {error_message}\n"
+            "Check network / proxy access to coinalyze.net and Binance."
+        )
+    except Exception as e:
+        print(f"[ALERT WARN] Failed to send data feed alert: {e}")
 
 def acquire_lock():
     """Ensure only one instance of the bot is running"""
@@ -466,6 +490,8 @@ def run_once(cfg, tracking, gate_results=None):
     symbols=cfg['symbols']; interval=cfg.get('interval','15m'); lookback=int(cfg.get('lookback_minutes',15)); vwap_window=int(cfg.get('vwap_window',30)); volume_spike_mult=float(cfg.get('volume_spike_mult',1.6)); min_components=int(cfg.get('min_components',2))
     if gate_results is None:
         gate_results = {}
+    feed_failures = 0
+    last_feed_error = ''
     for idx, sym in enumerate(symbols):
         try:
             # Pass full config to decide_signal for weighted scoring
@@ -632,7 +658,15 @@ def run_once(cfg, tracking, gate_results=None):
             # Coinalyze free tier: 40 API calls/minute, each symbol makes ~3 API calls
             if idx < len(symbols) - 1:
                 time.sleep(6.0)
+        except DataFeedUnavailable as e:
+            feed_failures += 1
+            last_feed_error = str(e)
+            print(f"[FEED DOWN] {sym}: {e}")
         except Exception as e: print(f"[ERR] {sym}: {e}")
+
+    # If all symbols failed due to market data outages, alert once and skip signal push
+    if feed_failures == len(symbols) and feed_failures > 0:
+        alert_data_feed_unavailable(last_feed_error)
 
 def main():
     global ai_analyst

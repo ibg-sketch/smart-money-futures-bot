@@ -12,6 +12,11 @@ load_dotenv()
 COINALYZE_API = 'https://api.coinalyze.net/v1'
 COINALYZE_KEY = os.getenv('COINALYZE_API_KEY')
 
+
+class DataFeedUnavailable(RuntimeError):
+    """Raised when upstream market data cannot be reached (network/proxy issues)."""
+
+
 # Simple in-memory cache to reduce API calls (2.5-minute TTL)
 _API_CACHE: Dict[str, Tuple[object, float]] = {}
 _CACHE_TTL = 150  # seconds
@@ -40,6 +45,16 @@ def _get(u, p=None, t=20, retries=5):
             r = requests.get(u, params=p, timeout=t)
             r.raise_for_status()
             return r.json()
+        except requests.exceptions.ProxyError as e:
+            # Explicitly surface proxy blocks (e.g., CONNECT 403) so the caller can alert
+            _warn_once_per_minute('proxy_block', f'Proxy blocked data feed: {e}')
+            raise DataFeedUnavailable(f'Proxy blocked access to {u}: {e}')
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+            _warn_once_per_minute('conn_error', f'Data feed connection error: {e}')
+            if attempt < retries - 1:
+                time.sleep(2 ** attempt)
+                continue
+            raise DataFeedUnavailable(f'Data feed unavailable: {e}')
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 429 and attempt < retries - 1:
                 wait_time = (2 ** attempt) * 1.5
