@@ -99,7 +99,7 @@ def test_algorithm_implementation():
     # Test Confluence (2+ of 3 requirement)
     tests_total += 1
     try:
-        with open('smart_signal.py', 'r') as f:
+        with open('signals/scoring.py', 'r') as f:
             code = f.read()
         
         if 'primary_aligned >= 2' in code and 'primary_total = 3' in code:
@@ -113,7 +113,7 @@ def test_algorithm_implementation():
     # Test RSI Filter Relaxation
     tests_total += 1
     try:
-        with open('smart_signal.py', 'r') as f:
+        with open('signals/scoring.py', 'r') as f:
             code = f.read()
         
         # Check for SELL RSI relaxation
@@ -145,7 +145,7 @@ def test_algorithm_implementation():
     # Test Directional Blocking
     tests_total += 1
     try:
-        with open('smart_signal.py', 'r') as f:
+        with open('signals/scoring.py', 'r') as f:
             code = f.read()
         
         if "if components.get('CVD_pos') or components.get('OI_up'):" in code:

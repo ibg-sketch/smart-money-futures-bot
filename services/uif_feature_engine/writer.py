@@ -7,7 +7,7 @@ Append-only CSV logging to data/uif_log.csv with automatic rotation.
 import csv
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 
 
@@ -69,7 +69,7 @@ class UIFWriter:
     def _rotate_csv(self):
         """Rotate CSV file and cleanup old rotations."""
         try:
-            timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+            timestamp = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
             rotated_path = f"{self.csv_path}.{timestamp}"
             
             os.rename(self.csv_path, rotated_path)
@@ -126,7 +126,7 @@ class UIFWriter:
             if self._should_rotate():
                 self._rotate_csv()
             
-            timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+            timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
             
             row = [
                 timestamp,

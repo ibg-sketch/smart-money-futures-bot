@@ -9,7 +9,7 @@ import csv
 import time
 import requests
 import yaml
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from collections import defaultdict
 
 def load_config():
@@ -49,7 +49,7 @@ def fetch_price_range_during_period(symbol, timestamp, duration_minutes):
         check_time = signal_time + timedelta(minutes=duration_minutes)
         
         # If check_time is in the future, we can't evaluate yet
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         if check_time > now:
             return None, "PENDING"
         

@@ -5,11 +5,9 @@ Tests all critical components: ATR, multipliers, scoring, thresholds
 
 import json
 import sys
-from smart_signal import (
-    calculate_atr, 
-    calculate_price_targets,
-    format_signal_telegram
-)
+from signals.features import calculate_atr
+from signals.formatting import format_signal_telegram
+from signals.scoring import calculate_price_targets
 
 # Test colors
 GREEN = '\033[92m'

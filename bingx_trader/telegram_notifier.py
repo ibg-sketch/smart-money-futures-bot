@@ -1,6 +1,7 @@
 """
 Telegram Notifications for Trading Channel
 """
+import os
 import requests
 from typing import Optional
 from .config import TradingConfig
@@ -8,9 +9,21 @@ from datetime import datetime
 
 class TelegramNotifier:
     def __init__(self):
-        self.bot_token = TradingConfig.TELEGRAM_BOT_TOKEN
-        self.trading_channel = TradingConfig.TRADING_CHANNEL_ID
-        self.base_url = f"https://api.telegram.org/bot{self.bot_token}"
+        # Provide fallbacks so we never silently drop trading notifications
+        # if dedicated trading credentials are missing.
+        self.bot_token = TradingConfig.TELEGRAM_BOT_TOKEN or os.getenv('TELEGRAM_BOT_TOKEN')
+        self.trading_channel = (
+            TradingConfig.TRADING_CHANNEL_ID
+            or os.getenv('TRADING_TELEGRAM_CHAT_ID')
+            or os.getenv('TELEGRAM_CHAT_ID')
+        )
+
+        if not self.bot_token:
+            print("[TELEGRAM WARN] Trading bot token is missing; messages will not be sent")
+        if not self.trading_channel:
+            print("[TELEGRAM WARN] Trading channel ID is missing; messages will not be sent")
+
+        self.base_url = f"https://api.telegram.org/bot{self.bot_token}" if self.bot_token else None
     
     def send_message(self, message: str, parse_mode: str = "HTML", reply_to_message_id: Optional[int] = None) -> Optional[int]:
         """
@@ -19,6 +32,9 @@ class TelegramNotifier:
         Returns:
             message_id if successful, None otherwise
         """
+        if not self.bot_token or not self.trading_channel:
+            return None
+
         try:
             url = f"{self.base_url}/sendMessage"
             payload = {
@@ -213,8 +229,12 @@ class TelegramNotifier:
 
 💡 <b>Best strategy:</b> {best_strategy} ({additional_profit:+.2f} more)
 """
-        
+
         return self.send_message(message)
+
+    def send_effectiveness_report(self, report_text: str) -> Optional[int]:
+        """Send aggregated effectiveness statistics to the trading channel."""
+        return self.send_message(report_text, parse_mode="HTML")
     
     def notify_daily_report(self, total_trades: int, wins: int, losses: int,
                            total_profit: float, win_rate: float, roi: float) -> Optional[int]:

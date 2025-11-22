@@ -3,9 +3,10 @@ Brier Score & Reliability Curve Computation
 Evaluates confidence calibration for daily KPI reporting.
 """
 import csv
-import numpy as np
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+
+import numpy as np
 
 def compute_brier_score_per_symbol(lookback_days=1):
     """
@@ -27,7 +28,7 @@ def compute_brier_score_per_symbol(lookback_days=1):
         return {}
     
     # Filter to last N days
-    cutoff_date = datetime.utcnow() - timedelta(days=lookback_days)
+    cutoff_date = datetime.now(timezone.utc) - timedelta(days=lookback_days)
     
     # Group signals by symbol
     symbol_data = defaultdict(list)

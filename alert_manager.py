@@ -9,12 +9,12 @@ Features:
 - Thread-safe operations with file locking
 """
 
-import json
-import time
-import os
 import csv
 import fcntl
-from datetime import datetime
+import json
+import os
+import time
+from datetime import datetime, timezone
 from telegram_utils import send_telegram_message
 
 ALERTS_QUEUE_FILE = 'alerts_queue.json'
@@ -122,7 +122,7 @@ def log_alert_attempt(alert_data, status, message_id=None, error=None):
         with open(ALERT_LOG_FILE, 'a', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerow([
-                datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+                datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S'),
                 alert_data['symbol'],
                 alert_data['verdict'],
                 alert_data['alert_type'],

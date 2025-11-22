@@ -7,9 +7,9 @@ Outputs structured data to CSV for validation before full production release.
 import csv
 import os
 import time
-from datetime import datetime
-from typing import Dict, Any, Optional
 import threading
+from datetime import datetime, timezone
+from typing import Dict, Any, Optional
 
 class ShadowLogger:
     """Thread-safe logger for shadow mode predictions and comparisons."""
@@ -70,7 +70,7 @@ class ShadowLogger:
         with self.lock:
             # Ensure timestamp is present
             if 'ts' not in data:
-                data['ts'] = datetime.utcnow().isoformat()
+                data['ts'] = datetime.now(timezone.utc).isoformat()
             
             # Fill in missing fields with None
             row = {header: data.get(header, None) for header in self.headers}
@@ -154,7 +154,7 @@ class ShadowLogger:
         volume_ratio = volume / volume_median if volume_median > 0 else 1.0
         
         data = {
-            'ts': datetime.utcnow().isoformat(),
+            'ts': datetime.now(timezone.utc).isoformat(),
             'symbol': symbol,
             'verdict': verdict,
             'logit': round(logit, 4),

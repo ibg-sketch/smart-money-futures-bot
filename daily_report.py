@@ -11,8 +11,8 @@ Sends compact table to Telegram and prints to console.
 """
 
 import csv
-import datetime
 from collections import defaultdict
+from datetime import datetime, time, timezone
 from telegram_utils import send_telegram_message
 
 
@@ -24,9 +24,9 @@ def compute_daily_metrics(analysis_log_path='analysis_log.csv', effectiveness_lo
         dict: {symbol: {profit_factor, win_rate, blocked_share, avg_ttl_min}}
     """
     # Get today's date range (00:00 to 23:59 UTC)
-    today = datetime.datetime.utcnow().date()
-    today_start = datetime.datetime.combine(today, datetime.time.min)
-    today_end = datetime.datetime.combine(today, datetime.time.max)
+    today = datetime.now(timezone.utc).date()
+    today_start = datetime.combine(today, time.min, tzinfo=timezone.utc)
+    today_end = datetime.combine(today, time.max, tzinfo=timezone.utc)
     
     # Data structures for metrics
     symbol_data = defaultdict(lambda: {

@@ -42,7 +42,7 @@ def test_stale_basis_zero_contribution():
     
     # Import fetch_basis
     sys.path.insert(0, '.')
-    from smart_signal import fetch_basis
+    from signals.features import fetch_basis
     
     # Test fetch_basis with stale data
     basis_pct, age_sec = fetch_basis('BTCUSDT')

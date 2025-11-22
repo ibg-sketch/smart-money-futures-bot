@@ -9,7 +9,7 @@ import sys
 import time
 import logging
 import yaml
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, Optional
 
 if sys.stdout.encoding != 'utf-8':
@@ -246,7 +246,7 @@ class AIAnalystService:
             return False
         
         if date_str is None:
-            yesterday = datetime.utcnow() - timedelta(days=1)
+            yesterday = datetime.now(timezone.utc) - timedelta(days=1)
             date_str = yesterday.strftime('%Y-%m-%d')
         
         try:
@@ -841,7 +841,7 @@ Analyze what worked and what didn't. Identify feature patterns and provide actio
                     ])
                 
                 writer.writerow([
-                    datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+                    datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S'),
                     user_id,
                     question[:200],
                     query_type,
@@ -882,7 +882,7 @@ Analyze what worked and what didn't. Identify feature patterns and provide actio
         
         while True:
             try:
-                now = datetime.utcnow()
+                now = datetime.now(timezone.utc)
                 current_time = now.strftime('%H:%M')
                 current_date = now.strftime('%Y-%m-%d')
                 

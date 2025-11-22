@@ -144,7 +144,7 @@ Telegram signals include:
 ```
 .
 ├── main.py                      # Main signal generation
-├── smart_signal.py              # Signal logic and scoring
+├── signals/                     # Signal logic (features, scoring, formatting)
 ├── signal_tracker.py            # Effectiveness tracking
 ├── cvd_service.py              # CVD data collection
 ├── liquidation_service.py      # Liquidation tracking

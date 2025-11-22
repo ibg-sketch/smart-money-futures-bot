@@ -15,6 +15,7 @@ from .signal_reader import SignalReader
 from .telegram_notifier import TelegramNotifier
 from .trade_logger import TradeLogger
 from .cancellation_monitor import CancellationMonitor
+from .effectiveness_reporter import format_bingx_effectiveness_report
 
 class TradingService:
     def __init__(self):
@@ -335,10 +336,27 @@ class TradingService:
         return today_profit
     
     def _send_hourly_report(self):
-        """Send hourly effectiveness report to trading channel - DISABLED to avoid duplicates"""
-        # NOTE: Hourly effectiveness report is now handled by signal_tracker.py to avoid duplicates
-        # This method is kept for compatibility but does nothing
-        pass
+        """Send hourly effectiveness report to trading channel (if data exists)."""
+        now = datetime.now()
+
+        # Only send once per hour and only at minute 0 to avoid spamming
+        if now.minute != 0 or self.last_hourly_report_hour == now.hour:
+            return
+
+        report = format_bingx_effectiveness_report()
+
+        if not report:
+            print("[REPORT] No trades logged yet, skipping hourly effectiveness report")
+            self.last_hourly_report_hour = now.hour
+            return
+
+        sent_id = self.telegram.send_effectiveness_report(report)
+        if sent_id:
+            print(f"[REPORT] Hourly effectiveness report sent (msg_id={sent_id})")
+        else:
+            print("[REPORT WARN] Failed to send hourly effectiveness report")
+
+        self.last_hourly_report_hour = now.hour
     
     def stop(self):
         print("\n🛑 Stopping trading service...")
