@@ -4,10 +4,11 @@ Calculates daily and weekly performance metrics from shadow prediction logs.
 Tracks precision, coverage, net expectancy, and generates alerts.
 """
 
-import pandas as pd
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Tuple, Optional
+
+import pandas as pd
 
 class MetricsReporter:
     """Analyze shadow mode predictions and calculate performance metrics."""
@@ -50,7 +51,7 @@ class MetricsReporter:
             return self._empty_metrics()
         
         if date is None:
-            date = datetime.utcnow()
+            date = datetime.now(timezone.utc)
         
         # Filter for specific day
         day_start = date.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -74,7 +75,7 @@ class MetricsReporter:
             return self._empty_metrics()
         
         if week_start is None:
-            week_start = datetime.utcnow() - timedelta(days=7)
+            week_start = datetime.now(timezone.utc) - timedelta(days=7)
         
         week_end = week_start + timedelta(days=7)
         
@@ -304,7 +305,7 @@ class MetricsReporter:
         report = self.generate_report(period)
         with open(filename, 'w') as f:
             f.write(report)
-            f.write(f"\nGenerated: {datetime.utcnow().isoformat()}\n")
+            f.write(f"\nGenerated: {datetime.now(timezone.utc).isoformat()}\n")
 
 
 if __name__ == "__main__":
