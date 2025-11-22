@@ -1,5 +1,7 @@
-requests
+rrequests
 python-dotenv
 PyYAML
 pandas
 numpy
+websocket-client
+pytz
